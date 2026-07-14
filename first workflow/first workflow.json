@@ -1,0 +1,290 @@
+{
+  "name": "first workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -64,
+        0
+      ],
+      "id": "2aa7a919-a22f-4c6e-8d1a-05122ec0913c",
+      "name": "When chat message received",
+      "webhookId": "a8bfd88b-cb17-4e21-952d-a9df13cd693e"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        352,
+        0
+      ],
+      "id": "c78b39ef-ad74-4e42-90e6-2d273639ce3c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "nvidia/nemotron-3-nano-30b-a3b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        160,
+        224
+      ],
+      "id": "9d8fdaac-5dc5-4a7a-977e-e55622e21035",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "qQmqmK5rY4m6Zy4M",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        288,
+        224
+      ],
+      "id": "0532a997-c52a-4631-aa6e-5c7e27e756c3",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1InCyyRD4NtJMi4w_NT4YxYI2qKVxcVkvOgliJTB1UW4",
+          "mode": "list",
+          "cachedResultName": "portfolio",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1InCyyRD4NtJMi4w_NT4YxYI2qKVxcVkvOgliJTB1UW4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1InCyyRD4NtJMi4w_NT4YxYI2qKVxcVkvOgliJTB1UW4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        224
+      ],
+      "id": "f6bdddf2-c5ff-41eb-b552-f7f7ad9378fd",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tURSq5wyxoc3B8O3",
+          "name": "main 1"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "symbols": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Ticker', ``, 'string') }}",
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "filters": {
+          "latest": true
+        }
+      },
+      "type": "n8n-nodes-base.marketstackTool",
+      "typeVersion": 1,
+      "position": [
+        544,
+        224
+      ],
+      "id": "6fd00fc7-928d-43f5-bab1-395cbd3dbf6c",
+      "name": "Get many EoD data in Marketstack",
+      "credentials": {
+        "marketstackApi": {
+          "id": "cfs0VKTu20LcFkGS",
+          "name": "Marketstack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1InCyyRD4NtJMi4w_NT4YxYI2qKVxcVkvOgliJTB1UW4",
+          "mode": "list",
+          "cachedResultName": "portfolio",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1InCyyRD4NtJMi4w_NT4YxYI2qKVxcVkvOgliJTB1UW4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1InCyyRD4NtJMi4w_NT4YxYI2qKVxcVkvOgliJTB1UW4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "ticker": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('ticker__using_to_match_', ``, 'string') }}",
+            "price": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('price', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "ticker"
+          ],
+          "schema": [
+            {
+              "id": "ticker",
+              "displayName": "ticker",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "quantity",
+              "displayName": "quantity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "price",
+              "displayName": "price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        224
+      ],
+      "id": "65685f1a-33d7-479b-afd1-5d9bfdd6f497",
+      "name": "update prices",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tURSq5wyxoc3B8O3",
+          "name": "main 1"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many EoD data in Marketstack": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update prices": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e68d832f-b482-4f57-9b6e-95a0661210c2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bc7e818a512f7022b5aefe4a16a6d441de19672a3b745741a6c77c25d900b3e2"
+  },
+  "nodeGroups": [],
+  "id": "agBOt5gNSXzGc4b5",
+  "tags": []
+}
