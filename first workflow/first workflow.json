@@ -22,7 +22,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        352,
+        480,
         0
       ],
       "id": "c78b39ef-ad74-4e42-90e6-2d273639ce3c",
@@ -202,6 +202,40 @@
           "name": "main 1"
         }
       }
+    },
+    {
+      "parameters": {
+        "userKey": "u36sg7imh99iiwsqwkahc46d79qmg5",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.pushoverTool",
+      "typeVersion": 1,
+      "position": [
+        800,
+        224
+      ],
+      "id": "d2dac7ef-da61-4456-9549-95a8534bca44",
+      "name": "Push a message in Pushover",
+      "credentials": {
+        "pushoverApi": {
+          "id": "kFRjtPtTo3F2St1J",
+          "name": "Pushover account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [
+        928,
+        224
+      ],
+      "id": "dc858654-5913-49e2-a82f-92f2430955ab",
+      "name": "Date & Time"
     }
   ],
   "pinData": {},
@@ -271,15 +305,37 @@
           }
         ]
       ]
+    },
+    "Push a message in Pushover": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "e68d832f-b482-4f57-9b6e-95a0661210c2",
+  "versionId": "76334173-f89b-4fec-a2ad-1d83d24390c8",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "bc7e818a512f7022b5aefe4a16a6d441de19672a3b745741a6c77c25d900b3e2"
