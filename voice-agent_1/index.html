@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Record → n8n Webhook → Play</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+      background: radial-gradient(circle at 30% 20%, #2f6fd6 0%, #1c4faa 40%, #123a86 100%);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* decorative wavy blobs, same family as the login design */
+    .blob { position: absolute; opacity: 0.5; pointer-events: none; z-index: 0; }
+    .blob.tl { top: 4%; left: 6%; width: 150px; }
+    .blob.tr { top: 8%; right: 8%; width: 190px; }
+    .blob.bl { bottom: 6%; left: 10%; width: 170px; }
+    .blob.br { bottom: -4%; right: -6%; width: 420px; }
+
+    .card {
+      position: relative;
+      z-index: 5;
+      width: min(640px, 92vw);
+      padding: 36px 32px;
+      border-radius: 28px;
+      color: #fff;
+      isolation: isolate;
+
+      /* liquid-glass body: very light tint, heavy blur + saturation so
+         whatever's behind it reads through crisp and colorful */
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+
+      /* thin bright rim like a real glass edge, brighter along the top */
+      border: 1px solid rgba(255,255,255,0.35);
+
+      box-shadow:
+        /* soft ambient drop shadow */
+        0 24px 70px rgba(0,0,15,0.45),
+        /* bright specular highlight along the top edge */
+        inset 0 1px 1px rgba(255,255,255,0.6),
+        /* faint highlight down the left edge */
+        inset 1px 0 0 rgba(255,255,255,0.15),
+        /* soft dark falloff along the bottom for depth */
+        inset 0 -20px 40px -20px rgba(0,0,20,0.25);
+    }
+
+    /* glossy sheen sweeping across the top of the glass */
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.35) 0%,
+        rgba(255,255,255,0.08) 30%,
+        rgba(255,255,255,0) 55%
+      );
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* subtle bottom-edge refraction glow */
+    .card::after {
+      content: "";
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      bottom: -1px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+      pointer-events: none;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 24px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 6px;
+      color: rgba(255,255,255,0.9);
+    }
+
+    .row { margin-bottom: 18px; }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.4);
+      outline: none;
+      font-size: 14px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(6px);
+      color: #1a1a1a;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    input::placeholder { color: #8a8f96; }
+
+    .hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.75);
+      margin-top: 6px;
+    }
+    .hint b { color: #fff; }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+
+    button {
+      padding: 11px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+    }
+    button:active:not(:disabled) { transform: scale(0.97); }
+
+    #startBtn, #stopBtn {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.5);
+      color: #0b2a52;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.8);
+    }
+    #startBtn:hover:not(:disabled), #stopBtn:hover:not(:disabled) {
+      background: #fff;
+    }
+
+    #sendBtn {
+      background: rgba(11,42,82,0.75);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.25);
+    }
+    #sendBtn:hover:not(:disabled) { background: rgba(15,53,103,0.85); }
+
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .player-block {
+      margin-bottom: 18px;
+    }
+    .player-label {
+      font-size: 12.5px;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 6px;
+    }
+    audio {
+      width: 100%;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.9);
+    }
+
+    .status {
+      padding: 14px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.15);
+      white-space: pre-wrap;
+      font-size: 13px;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      color: rgba(255,255,255,0.9);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="blob tl">
+    <svg viewBox="0 0 100 100"><path d="M75 20 A35 35 0 1 0 78 60" fill="none" stroke="url(#g1)" stroke-width="14" stroke-linecap="round"/>
+      <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bcd8ff"/><stop offset="1" stop-color="#3f7fd9"/></linearGradient></defs>
+    </svg>
+  </div>
+
+  <div class="blob tr">
+    <svg viewBox="0 0 100 140"><path d="M20 10 C70 10 85 45 65 60 C45 75 55 100 80 100 C95 100 90 125 70 130" fill="none" stroke="url(#g5)" stroke-width="14" stroke-linecap="round"/>
+      <defs><linearGradient id="g5" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d4488"/><stop offset="1" stop-color="#3f76cf"/></linearGradient></defs>
+    </svg>
+  </div>
+
+  <div class="blob bl">
+    <svg viewBox="0 0 100 100"><path d="M70 15 A38 38 0 1 1 20 30" fill="none" stroke="url(#g4)" stroke-width="16" stroke-linecap="round"/>
+      <defs><linearGradient id="g4" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#295aa8"/><stop offset="1" stop-color="#4f8ee0"/></linearGradient></defs>
+    </svg>
+  </div>
+
+  <div class="blob br">
+    <svg viewBox="0 0 400 140"><path d="M0 90 C40 40 80 40 120 90 C160 140 200 140 240 90 C280 40 320 40 360 90 C380 115 390 120 400 118" fill="none" stroke="url(#g8)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+      <defs><linearGradient id="g8" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1d4488"/><stop offset="1" stop-color="#8fb8f2"/></linearGradient></defs>
+    </svg>
+  </div>
+
+  <div class="card">
+    <h1>Record → n8n → Play</h1>
+
+    <div class="row">
+      <label for="url">n8n Webhook URL</label>
+      <input id="url" type="text"
+        value="WEBHOOK_URL"
+        placeholder="https://<your-instance>.app.n8n.cloud/webhook/...." />
+      <div class="hint">Tip: use the <b>Test URL</b> while you're building, then swap to the <b>Production URL</b>.</div>
+    </div>
+
+    <div class="btn-row">
+      <button id="startBtn">🎙️ Start recording</button>
+      <button id="stopBtn" disabled>⏹ Stop</button>
+      <button id="sendBtn" disabled>➡️ Send to n8n</button>
+    </div>
+
+    <div class="player-block">
+      <div class="player-label">Local recording preview</div>
+      <audio id="localPlayer" controls></audio>
+    </div>
+
+    <div class="player-block">
+      <div class="player-label">Response audio from n8n</div>
+      <audio id="remotePlayer" controls></audio>
+    </div>
+
+    <div class="status" id="status">Idle.</div>
+  </div>
+
+<script>
+(() => {
+  const statusEl = document.getElementById("status");
+  const urlEl = document.getElementById("url");
+
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn  = document.getElementById("stopBtn");
+  const sendBtn  = document.getElementById("sendBtn");
+
+  const localPlayer  = document.getElementById("localPlayer");
+  const remotePlayer = document.getElementById("remotePlayer");
+
+  let mediaRecorder = null;
+  let chunks = [];
+  let recordedBlob = null;
+
+  function setStatus(msg) {
+    statusEl.textContent = msg;
+  }
+
+  function pickMimeType() {
+    const candidates = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/ogg;codecs=opus",
+      "audio/ogg"
+    ];
+    return candidates.find(t => MediaRecorder.isTypeSupported(t)) || "";
+  }
+
+  async function startRecording() {
+    setStatus("Requesting microphone permission…");
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    chunks = [];
+    recordedBlob = null;
+
+    const mimeType = pickMimeType();
+    mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+
+      recordedBlob = new Blob(chunks, { type: mediaRecorder.mimeType || "audio/webm" });
+      const localUrl = URL.createObjectURL(recordedBlob);
+      localPlayer.src = localUrl;
+
+      setStatus(
+        `Recorded ${Math.round(recordedBlob.size/1024)} KB\n` +
+        `MIME: ${recordedBlob.type}\n` +
+        `Ready to send.`
+      );
+
+      sendBtn.disabled = false;
+    };
+
+    mediaRecorder.start();
+    setStatus(`Recording… (MIME: ${mediaRecorder.mimeType || "default"})`);
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    sendBtn.disabled = true;
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+    }
+    stopBtn.disabled = true;
+    startBtn.disabled = false;
+  }
+
+  async function sendToN8n() {
+    const webhookUrl = urlEl.value.trim();
+    if (!webhookUrl || webhookUrl === "WEBHOOK_URL") {
+      alert("Paste your n8n webhook URL first.");
+      return;
+    }
+    if (!recordedBlob) {
+      alert("Record something first.");
+      return;
+    }
+
+    setStatus("Uploading audio to n8n…");
+
+    const form = new FormData();
+    form.append("audio", recordedBlob, "recording.webm");
+
+    let res;
+    try {
+      res = await fetch(webhookUrl, {
+        method: "POST",
+        body: form
+      });
+    } catch (err) {
+      setStatus("Fetch failed (likely CORS or network).\n\n" + String(err));
+      return;
+    }
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      setStatus(`n8n returned HTTP ${res.status}\n\n${text}`);
+      return;
+    }
+
+    const contentType = res.headers.get("content-type") || "";
+    setStatus(`Got response. Content-Type: ${contentType}\nDownloading audio…`);
+
+    const outBlob = await res.blob();
+    const outUrl = URL.createObjectURL(outBlob);
+    remotePlayer.src = outUrl;
+
+    setStatus(
+      `Done.\n` +
+      `Response bytes: ${Math.round(outBlob.size/1024)} KB\n` +
+      `Response MIME: ${outBlob.type || contentType || "unknown"}\n` +
+      `Playing below.`
+    );
+
+    remotePlayer.play().catch(() => {});
+  }
+
+  startBtn.addEventListener("click", () => startRecording().catch(err => {
+    setStatus("Could not start recording:\n" + String(err));
+  }));
+  stopBtn.addEventListener("click", stopRecording);
+  sendBtn.addEventListener("click", () => sendToN8n().catch(err => {
+    setStatus("Send failed:\n" + String(err));
+  }));
+})();
+</script>
+</body>
+</html>
